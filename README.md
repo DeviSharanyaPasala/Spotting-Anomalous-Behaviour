@@ -1,34 +1,42 @@
 # Spotting Anomalous Behaviour
 
-Detecting unusual activity in surveillance footage using a ConvLSTM Autoencoder. The model learns what normal pedestrian movement looks like and flags frames where it can't reconstruct the sequence accurately.
+Detecting unusual activity in surveillance footage using a ConvLSTM Autoencoder trained only on normal pedestrian movement.
+
+The idea is straightforward: if the model only ever sees normal activity during training, it gets good at reconstructing normal frames. When it sees something unusual at test time, the reconstruction error spikes. That spike is how anomalies get flagged.
 
 ## How it works
 
-Normal video clips are used for training only. The autoencoder learns to reconstruct normal motion patterns. At test time, frames with reconstruction error above a threshold (mean + 2 standard deviations) are flagged as anomalies. No labels are needed during training since it's an unsupervised approach.
+- Input is a sequence of 10 consecutive grayscale frames at 227x227
+- A ConvLSTM Autoencoder learns to reconstruct normal motion patterns
+- At inference, frames where reconstruction error exceeds the threshold (mean + 2 standard deviations) are flagged as anomalous
+- No labels needed during training — fully unsupervised
 
-## Model
+## Training
 
-- Architecture: ConvLSTM Autoencoder
-- Input: 10 consecutive grayscale frames at 227x227 pixels
-- Encoder: two ConvLSTM layers with 64 and 32 filters
-- Decoder: 3D convolution with sigmoid activation
-- Loss: Mean Squared Error
-- Optimizer: Adam (lr 0.001)
-- Training: 5 epochs, batch size 2
-
-## Dataset
-
-UCSD Anomaly Detection Dataset, Ped1 subset.
-- Training: 10 clips of normal pedestrian activity (Train001 to Train010)
-- Testing: 12 clips with normal and abnormal activity mixed (Test001 to Test012)
-- Format: .tif image sequences, resized to 227x227
+- Dataset: UCSD Anomaly Detection Dataset, Ped1 subset
+- Training clips: Train001, Train002, Train003 (165 total frames, 155 sequences of 10)
+- Epochs: 5
+- Loss per epoch: 0.0330, 0.0039, 0.0015, 0.0011, 0.0007
+- Final MSE loss: 0.0007
 
 ## Results
 
-- Final MSE loss: 0.004 to 0.006
-- Anomalous frames correctly detected in test clips (e.g. frames 34, 35, 36, 70, 71, 72)
-- Reconstruction error plots clearly separate normal from abnormal frames
-- Threshold computed per test sequence based on mean and standard deviation
+- Anomalous frames detected: indices 133 to 141
+- The reconstruction error plot clearly separates normal from anomalous frames
+- Model converged quickly — loss dropped by 97% from epoch 1 to epoch 5
+
+## Dataset
+
+UCSD Anomaly Detection Dataset, Ped1 subset. Training uses clips of normal pedestrian activity. Testing uses clips with a mix of normal and abnormal behavior.
+
+Source: http://www.svcl.ucsd.edu/projects/anomaly/dataset.htm
+
+## How to run
+
+```bash
+pip install -r requirements.txt
+jupyter notebook Spotting_Anomalous_Behaviour.ipynb
+```
 
 ## Stack
 
